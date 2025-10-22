@@ -1,8 +1,12 @@
+import { Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
+
 export const GAME_CONFIG = {
-  // Screen dimensions
-  SCREEN_WIDTH: 375,
-  SCREEN_HEIGHT: 667,
-  
+  // Screen dimensions - dynamic based on device
+  SCREEN_WIDTH: width,
+  SCREEN_HEIGHT: height,
+
   // Bird settings
   BIRD_SIZE: 30,
   BIRD_START_X: 80,
@@ -16,10 +20,12 @@ export const GAME_CONFIG = {
   PIPE_GAP: 150,
   PIPE_SPEED: 3,
   PIPE_SPAWN_DISTANCE: 300,
-  
+  PIPE_CLEANUP_OFFSET: 50, // Remove pipes 50px off screen
+
   // Game settings
   GAME_SPEED: 1,
   SCORE_INCREMENT: 1,
+  GROUND_OFFSET: 100, // Ground collision offset from bottom
   
   // Colors
   COLORS: {

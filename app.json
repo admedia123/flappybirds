@@ -34,6 +34,12 @@
     },
     "cli": {
       "appVersionSource": "remote"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a81eb9cd-a5cd-454d-858a-f260a735924e"
+      }
+    },
+    "owner": "wemetask"
   }
 }

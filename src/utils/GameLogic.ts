@@ -40,7 +40,7 @@ export const createPipe = (x: number): Pipe => {
   const minHeight = 50;
   const maxHeight = GAME_CONFIG.SCREEN_HEIGHT - GAME_CONFIG.PIPE_GAP - 150;
   const topHeight = Math.random() * (maxHeight - minHeight) + minHeight;
-  
+
   return {
     id: Math.random().toString(36).substr(2, 9),
     x,
@@ -48,18 +48,19 @@ export const createPipe = (x: number): Pipe => {
     bottomY: topHeight + GAME_CONFIG.PIPE_GAP,
     width: GAME_CONFIG.PIPE_WIDTH,
     gap: GAME_CONFIG.PIPE_GAP,
+    scored: false, // Initialize scored flag
   };
 };
 
 export const updatePipes = (pipes: Pipe[]): Pipe[] => {
   return pipes
     .map(pipe => ({ ...pipe, x: pipe.x - GAME_CONFIG.PIPE_SPEED }))
-    .filter(pipe => pipe.x + pipe.width > -50);
+    .filter(pipe => pipe.x + pipe.width > -GAME_CONFIG.PIPE_CLEANUP_OFFSET);
 };
 
 export const checkCollisions = (bird: Bird, pipes: Pipe[]): boolean => {
   // Ground collision
-  if (bird.position.y + bird.size / 2 >= GAME_CONFIG.SCREEN_HEIGHT - 100) {
+  if (bird.position.y + bird.size / 2 >= GAME_CONFIG.SCREEN_HEIGHT - GAME_CONFIG.GROUND_OFFSET) {
     return true;
   }
   
@@ -90,16 +91,16 @@ export const checkCollisions = (bird: Bird, pipes: Pipe[]): boolean => {
   return false;
 };
 
-export const checkScore = (bird: Bird, pipes: Pipe[]): number => {
+export const checkScore = (bird: Bird, pipes: Pipe[]): { score: number; updatedPipes: Pipe[] } => {
   let newScore = 0;
-  
-  for (const pipe of pipes) {
-    // Check if bird has passed the pipe
-    if (bird.position.x > pipe.x + pipe.width && !(pipe as any).scored) {
+  const updatedPipes = pipes.map(pipe => {
+    // Check if bird has passed the pipe and hasn't been scored yet
+    if (bird.position.x > pipe.x + pipe.width && !pipe.scored) {
       newScore += GAME_CONFIG.SCORE_INCREMENT;
-      (pipe as any).scored = true;
+      return { ...pipe, scored: true }; // Create new object instead of mutating
     }
-  }
-  
-  return newScore;
+    return pipe;
+  });
+
+  return { score: newScore, updatedPipes };
 };

@@ -28,20 +28,30 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const GameScreen: React.FC<GameProps> = ({ onGameOver, onScoreUpdate }) => {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState());
-  const [gameEngine, setGameEngine] = useState<any>(null);
+  const [gameEngine, setGameEngine] = useState<GameEngine | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const gameLoopRef = useRef<any>(null);
+  const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const adService = AdService.getInstance();
   const iapService = IAPService.getInstance();
 
   useEffect(() => {
     initializeServices();
     return () => {
+      // Cleanup: Clear interval when component unmounts
       if (gameLoopRef.current) {
         clearInterval(gameLoopRef.current);
+        gameLoopRef.current = null;
       }
     };
   }, []);
+
+  // Cleanup interval when game stops running
+  useEffect(() => {
+    if (!isRunning && gameLoopRef.current) {
+      clearInterval(gameLoopRef.current);
+      gameLoopRef.current = null;
+    }
+  }, [isRunning]);
 
   const initializeServices = async () => {
     try {
@@ -66,6 +76,10 @@ const GameScreen: React.FC<GameProps> = ({ onGameOver, onScoreUpdate }) => {
   };
 
   const startGameLoop = () => {
+    // Clear any existing interval before starting new one
+    if (gameLoopRef.current) {
+      clearInterval(gameLoopRef.current);
+    }
     gameLoopRef.current = setInterval(() => {
       updateGame();
     }, 16); // ~60 FPS
@@ -77,27 +91,28 @@ const GameScreen: React.FC<GameProps> = ({ onGameOver, onScoreUpdate }) => {
 
       // Update bird
       const updatedBird = updateBird(prevState.bird);
-      
+
       // Update pipes
       let updatedPipes = updatePipes(prevState.pipes);
-      
+
       // Spawn new pipes
       const lastPipe = updatedPipes[updatedPipes.length - 1];
       if (!lastPipe || lastPipe.x < SCREEN_WIDTH - GAME_CONFIG.PIPE_SPAWN_DISTANCE) {
         updatedPipes.push(createPipe(SCREEN_WIDTH));
       }
-      
+
       // Check collisions
       const hasCollision = checkCollisions(updatedBird, updatedPipes);
-      
-      // Check score
-      const scoreIncrement = checkScore(updatedBird, updatedPipes);
+
+      // Check score (returns updated pipes with scored flags)
+      const { score: scoreIncrement, updatedPipes: pipesWithScore } = checkScore(updatedBird, updatedPipes);
+      updatedPipes = pipesWithScore;
       const newScore = prevState.score + scoreIncrement;
-      
+
       if (scoreIncrement > 0) {
         onScoreUpdate(newScore);
       }
-      
+
       if (hasCollision) {
         // Game over
         setIsRunning(false);

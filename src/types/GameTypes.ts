@@ -12,6 +12,7 @@ export interface Pipe {
   bottomY: number;
   width: number;
   gap: number;
+  scored?: boolean; // Track if bird passed this pipe
 }
 
 export interface GameState {
